@@ -1,0 +1,22 @@
+{
+  "users": {
+    "user_1_id": {
+      "github": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_1"
+      },
+      "confluence": {
+        "CONFLUENCE_BASE_URL": "...",
+        "CONFLUENCE_EMAIL": "...",
+        "CONFLUENCE_API_TOKEN": "..."
+      },
+      "googleDrive": {
+        "GOOGLE_DRIVE_CREDENTIALS": "..."
+      }
+    },
+    "user_2_id": {
+      "github": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_2"
+      }
+    }
+  }
+}

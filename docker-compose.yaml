@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  mcp-proxy:
+    build: .
+    container_name: mcp-proxy
+    ports:
+      - "3000:3000" # Single Gateway Port
+    volumes:
+      - ./users.json:/app/config/users.json
+    environment:
+      - USERS_CONFIG_PATH=/app/config/users.json
+      - PORT=3000
+    restart: unless-stopped
