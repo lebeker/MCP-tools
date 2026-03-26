@@ -28,6 +28,7 @@ function loadUsers() {
 const SERVER_COMMANDS = {
   github: { cmd: 'npx', args: ['@modelcontextprotocol/server-github'] },
   confluence: { cmd: 'npx', args: ['@zereight/mcp-confluence'] },
+  jira: { cmd: 'npx', args: ['@zereight/mcp-confluence'] },
   'google-drive': { cmd: 'npx', args: ['@piotr-agier/google-drive-mcp'] }
 };
 
@@ -46,6 +47,7 @@ app.get('/:userId/:serverType/sse', (req, res) => {
   let configKey = serverType;
   if (!userConfig?.[serverType]) {
     if (serverType === 'google-drive' && userConfig?.['googleDrive']) configKey = 'googleDrive';
+    if (serverType === 'jira' && userConfig?.confluence) configKey = 'confluence';
     // Add other mappings if needed
   }
   const serverConfig = userConfig ? userConfig[configKey] : null;
@@ -69,7 +71,7 @@ app.get('/:userId/:serverType/sse', (req, res) => {
   const finalEnv = { ...rawEnv };
 
   // Normalize environment variables for specific servers
-  if (serverType === 'confluence') {
+  if (serverType === 'confluence' || serverType === 'jira') {
     // Handle various naming conventions for Confluence
     if (rawEnv.CONFLUENCE_BASE_URL && !rawEnv.CONFLUENCE_URL) rawEnv.CONFLUENCE_URL = rawEnv.CONFLUENCE_BASE_URL;
     if (rawEnv.CONFLUENCE_EMAIL && !rawEnv.CONFLUENCE_USER_EMAIL) rawEnv.CONFLUENCE_USER_EMAIL = rawEnv.CONFLUENCE_EMAIL;
@@ -86,7 +88,7 @@ app.get('/:userId/:serverType/sse', (req, res) => {
     // Explicitly support JIRA_URL within confluence config
     finalEnv.JIRA_URL = rawEnv.JIRA_URL || (finalEnv.CONFLUENCE_URL ? finalEnv.CONFLUENCE_URL.split('/wiki')[0] : undefined);
 
-    console.log(`[Proxy] [${sessionId}] Confluence/Jira Env: URL=${finalEnv.CONFLUENCE_URL}, JIRA=${finalEnv.JIRA_URL}, Mail=${finalEnv.CONFLUENCE_API_MAIL}`);
+    console.log(`[Proxy] [${sessionId}] Atlassian Env: URL=${finalEnv.CONFLUENCE_URL}, JIRA=${finalEnv.JIRA_URL}, Mail=${finalEnv.CONFLUENCE_API_MAIL}`);
   }
 
   // Special handling for Google Drive (File-based credentials)
@@ -200,5 +202,7 @@ app.listen(PORT, () => {
   console.log(`\n🚀 Multi-tenant MCP Proxy started on port ${PORT}`);
   console.log(`Endpoints:`);
   console.log(`  - SSE:  GET  /:userId/github/sse`);
+  console.log(`  - SSE:  GET  /:userId/jira/sse`);
+  console.log(`  - SSE:  GET  /:userId/confluence/sse`);
   console.log(`  - MSG:  POST /message?sessionId=<id>\n`);
 });

@@ -1,11 +1,12 @@
 # Multi-Tenant MCP Proxy
 
-A containerized gateway that allows multiple users or entities to access GitHub, Confluence, and Google Drive MCP servers using their own isolated credentials.
+A containerized gateway that allows multiple users or entities to access GitHub, Jira/Confluence, and Google Drive MCP servers using their own isolated credentials.
 
 ## Features
 - **Multi-Tenancy**: Every user gets their own isolated MCP process.
 - **Dynamic Spawning**: Servers are only started when a user connects.
 - **SSE Transport**: Bridges stdio-based MCP servers to the web via Server-Sent Events.
+- **Codex-compatible stdio bridge**: Includes a local bridge script so Codex can talk to the SSE proxy through a stdio MCP command.
 - **File Shim for Google Drive**: Dynamically creates necessary JSON credentials and token files for Google Drive.
 
 ## Quick Start
@@ -113,5 +114,32 @@ To connect to a specific MCP server for a specific user, use the following SSE U
 | Server Type | Connection URL |
 | :--- | :--- |
 | **GitHub** | `http://localhost:3000/:userId/github/sse` |
+| **Jira** | `http://localhost:3000/:userId/jira/sse` |
 | **Confluence**| `http://localhost:3000/:userId/confluence/sse` |
 | **Google Drive** | `http://localhost:3000/:userId/google-drive/sse` |
+
+`jira` is an Atlassian alias backed by the same credentials/config used for `confluence`.
+
+## Codex Compatibility
+
+Codex MCP `--url` expects a streamable HTTP MCP server. This proxy exposes SSE plus a separate POST endpoint, so for Codex you should use the bundled stdio bridge instead of pointing Codex directly at `/sse`.
+
+Bridge command:
+
+```bash
+node /absolute/path/to/codex-stdio-bridge.js http://localhost:3000/<user>/<server>/sse
+```
+
+Example Codex config values:
+
+```toml
+[mcp_servers.github]
+command = "node"
+args = ["/absolute/path/to/codex-stdio-bridge.js", "http://localhost:3000/mex/github/sse"]
+
+[mcp_servers.jira]
+command = "node"
+args = ["/absolute/path/to/codex-stdio-bridge.js", "http://localhost:3000/mex/jira/sse"]
+```
+
+This avoids transport mismatches and makes the proxy reusable for future Codex agents.
