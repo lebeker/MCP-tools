@@ -5,6 +5,9 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 
+# Create config directory and ensure it exists
+RUN mkdir -p /app/config
+
 COPY . .
 
 # Gateway port

@@ -2,20 +2,31 @@
   "users": {
     "user_1_id": {
       "github": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_1"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN"
       },
       "confluence": {
-        "CONFLUENCE_BASE_URL": "...",
-        "CONFLUENCE_EMAIL": "...",
-        "CONFLUENCE_API_TOKEN": "..."
+        "CONFLUENCE_URL": "https://your-domain.atlassian.net/wiki",
+        "CONFLUENCE_USER_EMAIL": "your-email@example.com",
+        "CONFLUENCE_API_TOKEN": "YOUR_API_TOKEN"
       },
-      "googleDrive": {
-        "GOOGLE_DRIVE_CREDENTIALS": "..."
-      }
-    },
-    "user_2_id": {
-      "github": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_2"
+      "google-drive": {
+        "OAUTH_CLIENT_ID_JSON": {
+          "installed": {
+            "client_id": "YOUR_CLIENT_ID",
+            "project_id": "YOUR_PROJECT_ID",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_secret": "YOUR_CLIENT_SECRET"
+          }
+        },
+        "OAUTH_TOKEN_JSON": {
+          "access_token": "YOUR_ACCESS_TOKEN",
+          "refresh_token": "YOUR_REFRESH_TOKEN",
+          "scope": "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/spreadsheets",
+          "token_type": "Bearer",
+          "expiry_date": 1234567890123
+        }
       }
     }
   }
