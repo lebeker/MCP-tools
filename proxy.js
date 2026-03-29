@@ -99,7 +99,11 @@ app.get('/:userId/:serverType/sse', (req, res) => {
     finalEnv.CONFLUENCE_URL = confluenceUrl;
     finalEnv.CONFLUENCE_USERNAME = rawEnv.CONFLUENCE_USERNAME || username;
     finalEnv.CONFLUENCE_API_TOKEN = rawEnv.CONFLUENCE_API_TOKEN || token;
-    finalEnv.READ_ONLY_MODE = rawEnv.READ_ONLY_MODE || 'true';
+    if (Object.prototype.hasOwnProperty.call(serverConfig, 'READ_ONLY_MODE')) {
+      finalEnv.READ_ONLY_MODE = String(serverConfig.READ_ONLY_MODE);
+    } else {
+      finalEnv.READ_ONLY_MODE = 'false';
+    }
 
     console.log(
       `[Proxy] [${sessionId}] Atlassian Env: JIRA=${finalEnv.JIRA_URL}, ` +
@@ -149,12 +153,18 @@ app.get('/:userId/:serverType/sse', (req, res) => {
   // Inform client of the POST endpoint for messages
   res.write(`event: endpoint\ndata: /message?sessionId=${sessionId}\n\n`);
 
-  // Stream child stdout -> SSE 'message' events
+  // Stream child stdout -> SSE 'message' events with chunk-safe line buffering.
+  let stdoutBuffer = '';
   child.stdout.on('data', (chunk) => {
-    const lines = chunk.toString().split('\n').filter(l => l.trim());
-    lines.forEach(line => {
-      res.write(`event: message\ndata: ${line}\n\n`);
-    });
+    stdoutBuffer += chunk.toString();
+    const lines = stdoutBuffer.split('\n');
+    stdoutBuffer = lines.pop() ?? '';
+
+    lines
+      .filter((line) => line.trim())
+      .forEach((line) => {
+        res.write(`event: message\ndata: ${line}\n\n`);
+      });
   });
 
   const cleanup = () => {
@@ -183,6 +193,10 @@ app.get('/:userId/:serverType/sse', (req, res) => {
   });
 
   child.on('exit', (code) => {
+    if (stdoutBuffer.trim()) {
+      res.write(`event: message\ndata: ${stdoutBuffer}\n\n`);
+      stdoutBuffer = '';
+    }
     console.log(`[Proxy] [${sessionId}] Child process exited with code ${code}`);
     res.end();
     cleanup();

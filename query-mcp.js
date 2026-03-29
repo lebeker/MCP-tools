@@ -8,6 +8,7 @@ const TOOL_NAME = process.env.TOOL_NAME;
 const TOOL_ARGS = process.env.TOOL_ARGS ? JSON.parse(process.env.TOOL_ARGS) : {};
 const REQUEST_PARAMS = process.env.REQUEST_PARAMS ? JSON.parse(process.env.REQUEST_PARAMS) : {};
 const TOOLS_NAMES_ONLY = process.env.TOOLS_NAMES_ONLY === '1';
+const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 15000);
 
 if (REQUEST_METHOD === 'tools/call' && !TOOL_NAME) {
   console.error('TOOL_NAME is required');
@@ -146,7 +147,7 @@ async function main() {
   setTimeout(() => {
     console.error('Timed out waiting for MCP response');
     process.exit(1);
-  }, 15000);
+  }, REQUEST_TIMEOUT_MS);
 }
 
 main();
