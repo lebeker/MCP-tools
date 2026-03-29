@@ -4,7 +4,8 @@
   "description": "Multi-tenant MCP server proxy",
   "main": "proxy.js",
   "scripts": {
-    "start": "node proxy.js"
+    "start": "node proxy.js",
+    "validate:mcp-users": "bash validate-mcp-users.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/server-github": "2025.4.8",

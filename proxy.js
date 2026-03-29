@@ -27,10 +27,19 @@ function loadUsers() {
 
 const SERVER_COMMANDS = {
   github: { cmd: 'npx', args: ['@modelcontextprotocol/server-github'] },
-  confluence: { cmd: 'npx', args: ['@zereight/mcp-confluence'] },
-  jira: { cmd: 'npx', args: ['@zereight/mcp-confluence'] },
+  confluence: { cmd: 'uvx', args: ['mcp-atlassian'] },
+  jira: { cmd: 'uvx', args: ['mcp-atlassian'] },
   'google-drive': { cmd: 'npx', args: ['@piotr-agier/google-drive-mcp'] }
 };
+
+function stripWikiPath(url) {
+  return url ? url.replace(/\/wiki\/?$/, '') : url;
+}
+
+function ensureWikiPath(url) {
+  if (!url) return url;
+  return /\/wiki\/?$/.test(url) ? url.replace(/\/$/, '') : `${stripWikiPath(url)}/wiki`;
+}
 
 app.use(express.json());
 
@@ -72,23 +81,30 @@ app.get('/:userId/:serverType/sse', (req, res) => {
 
   // Normalize environment variables for specific servers
   if (serverType === 'confluence' || serverType === 'jira') {
-    // Handle various naming conventions for Confluence
-    if (rawEnv.CONFLUENCE_BASE_URL && !rawEnv.CONFLUENCE_URL) rawEnv.CONFLUENCE_URL = rawEnv.CONFLUENCE_BASE_URL;
-    if (rawEnv.CONFLUENCE_EMAIL && !rawEnv.CONFLUENCE_USER_EMAIL) rawEnv.CONFLUENCE_USER_EMAIL = rawEnv.CONFLUENCE_EMAIL;
+    const username =
+      rawEnv.CONFLUENCE_EMAIL ||
+      rawEnv.CONFLUENCE_USER_EMAIL ||
+      rawEnv.CONFLUENCE_USERNAME ||
+      rawEnv.JIRA_USERNAME;
+    const token =
+      rawEnv.CONFLUENCE_API_TOKEN ||
+      rawEnv.JIRA_API_TOKEN ||
+      rawEnv.CONFLUENCE_API_TOKEN_ROVO;
+    const jiraUrl = stripWikiPath(rawEnv.JIRA_URL || rawEnv.CONFLUENCE_BASE_URL || rawEnv.CONFLUENCE_URL);
+    const confluenceUrl = ensureWikiPath(rawEnv.CONFLUENCE_URL || rawEnv.CONFLUENCE_BASE_URL || rawEnv.JIRA_URL);
 
-    // Inject redundant names for compatibility across different MCP versions
-    if (rawEnv.CONFLUENCE_USER_EMAIL) rawEnv.CONFLUENCE_API_MAIL = rawEnv.CONFLUENCE_USER_EMAIL;
-    if (rawEnv.CONFLUENCE_API_TOKEN) rawEnv.CONFLUENCE_API_KEY = rawEnv.CONFLUENCE_API_TOKEN;
+    finalEnv.JIRA_URL = jiraUrl;
+    finalEnv.JIRA_USERNAME = username;
+    finalEnv.JIRA_API_TOKEN = token;
+    finalEnv.CONFLUENCE_URL = confluenceUrl;
+    finalEnv.CONFLUENCE_USERNAME = rawEnv.CONFLUENCE_USERNAME || username;
+    finalEnv.CONFLUENCE_API_TOKEN = rawEnv.CONFLUENCE_API_TOKEN || token;
+    finalEnv.READ_ONLY_MODE = rawEnv.READ_ONLY_MODE || 'true';
 
-    // Inject the names expected by @zereight/mcp-confluence
-    finalEnv.CONFLUENCE_URL = rawEnv.CONFLUENCE_URL || rawEnv.CONFLUENCE_BASE_URL;
-    finalEnv.CONFLUENCE_API_MAIL = rawEnv.CONFLUENCE_USER_EMAIL || rawEnv.CONFLUENCE_EMAIL || rawEnv.CONFLUENCE_API_MAIL;
-    finalEnv.CONFLUENCE_API_KEY = rawEnv.CONFLUENCE_API_TOKEN || rawEnv.CONFLUENCE_API_KEY;
-
-    // Explicitly support JIRA_URL within confluence config
-    finalEnv.JIRA_URL = rawEnv.JIRA_URL || (finalEnv.CONFLUENCE_URL ? finalEnv.CONFLUENCE_URL.split('/wiki')[0] : undefined);
-
-    console.log(`[Proxy] [${sessionId}] Atlassian Env: URL=${finalEnv.CONFLUENCE_URL}, JIRA=${finalEnv.JIRA_URL}, Mail=${finalEnv.CONFLUENCE_API_MAIL}`);
+    console.log(
+      `[Proxy] [${sessionId}] Atlassian Env: JIRA=${finalEnv.JIRA_URL}, ` +
+      `CONF=${finalEnv.CONFLUENCE_URL}, USER=${finalEnv.JIRA_USERNAME}`
+    );
   }
 
   // Special handling for Google Drive (File-based credentials)
